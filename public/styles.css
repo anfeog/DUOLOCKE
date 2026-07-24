@@ -1,19 +1,32 @@
-/* ================= Duolocke Z Jalmeida — mobile first ================= */
+/* ================= Duolocke Z Jalmeida — mobile first =================
+   Paleta sacada del menu del propio juego (DP Pause Menu / windowskins):
+   - Paneles azul pizarra  #313B47  con marco biselado claro
+   - Acento de seleccion    #FF6B10  (el selector naranja del menu)
+   - Oro para medallas/puntos, verde para logrado, rojo para peligro.
+   ===================================================================== */
 
 :root {
-  --bg: #0b0f1e;
-  --bg-2: #121935;
-  --card: #161e3d;
-  --card-2: #1d2750;
-  --line: #2a3568;
-  --text: #eef1ff;
-  --muted: #93a0cc;
+  --bg: #171d25;
+  --bg-2: #1f2732;
+  --panel: #313b47;        /* caja del menu del juego */
+  --panel-2: #3a4653;      /* panel un pelin mas claro */
+  --inset: #232b34;        /* huecos hundidos (vidas/medallas) */
+  --line: #4a5763;
+  --edge-light: rgba(255, 255, 255, .14);
+  --edge-dark: rgba(0, 0, 0, .40);
+  --text: #f4f7fa;
+  --muted: #9db0c1;
+  --accent: #ff6b10;       /* naranja del selector del menu */
+  --accent-dark: #b8490a;
+  --gold: #ffcb3d;
+  --gold-dark: #7a5a00;
+  --green: #46d17f;
   --red: #ee1515;
   --red-dark: #a80f0f;
-  --gold: #ffcb3d;
-  --green: #46d17f;
-  --shadow: 0 6px 0 rgba(0, 0, 0, .35);
-  --radius: 14px;
+  --radius: 12px;
+  /* marco biselado tipo ventana del juego */
+  --bevel: inset 0 2px 0 var(--edge-light), inset 0 -2px 0 var(--edge-dark);
+  --drop: 0 4px 0 rgba(0, 0, 0, .38);
 }
 
 * { box-sizing: border-box; }
@@ -30,25 +43,18 @@ html, body {
 
 body {
   background-image:
-    radial-gradient(ellipse at 20% -10%, rgba(238, 21, 21, .16), transparent 55%),
-    radial-gradient(ellipse at 90% 0%, rgba(90, 120, 255, .14), transparent 50%);
+    radial-gradient(ellipse at 18% -10%, rgba(255, 107, 16, .12), transparent 55%),
+    radial-gradient(ellipse at 92% 0%, rgba(70, 90, 120, .18), transparent 52%);
   background-attachment: fixed;
   min-height: 100dvh;
 }
 
 .hidden { display: none !important; }
-
 img { max-width: 100%; }
 
-button {
-  font-family: inherit;
-  cursor: pointer;
-  border: none;
-  background: none;
-  color: inherit;
-}
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
 
-/* ------------------------------------------------------ tipografía retro */
+/* ------------------------------------------------------ tipografia retro */
 
 .logo-text {
   font-family: 'Press Start 2P', monospace;
@@ -56,12 +62,12 @@ button {
   line-height: 1.6;
   letter-spacing: .5px;
   margin: 0;
-  text-shadow: 2px 2px 0 var(--red-dark), 4px 4px 0 rgba(0, 0, 0, .5);
+  text-shadow: 2px 2px 0 var(--accent-dark), 4px 4px 0 rgba(0, 0, 0, .5);
 }
 .logo-text span {
   color: var(--gold);
   margin: 0 .35em;
-  text-shadow: 2px 2px 0 #7a5a00;
+  text-shadow: 2px 2px 0 var(--gold-dark);
 }
 
 /* ------------------------------------------------------------- identidad */
@@ -73,124 +79,76 @@ button {
   place-items: center;
   padding: 24px;
   background: var(--bg);
-  background-image:
-    radial-gradient(ellipse at 50% 0%, rgba(238, 21, 21, .2), transparent 60%);
+  background-image: radial-gradient(ellipse at 50% 0%, rgba(255, 107, 16, .16), transparent 60%);
   z-index: 40;
 }
 
-.identity-box {
-  width: 100%;
-  max-width: 360px;
-  text-align: center;
-}
+.identity-box { width: 100%; max-width: 360px; text-align: center; }
 
 .identity-ball {
-  width: 64px;
-  height: 64px;
+  width: 64px; height: 64px;
   image-rendering: pixelated;
   animation: bob 2.4s ease-in-out infinite;
 }
-
-@keyframes bob {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-8px); }
-}
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 
 .identity .logo-text { font-size: 15px; margin: 18px 0 28px; }
-
-.identity-q {
-  color: var(--muted);
-  font-weight: 600;
-  margin: 0 0 14px;
-}
-
-.identity-buttons {
-  display: grid;
-  gap: 12px;
-}
+.identity-q { color: var(--muted); font-weight: 600; margin: 0 0 14px; }
+.identity-buttons { display: grid; gap: 12px; }
 
 .who {
   font-family: 'Press Start 2P', monospace;
   font-size: 13px;
   padding: 20px 12px;
   border-radius: var(--radius);
-  background: linear-gradient(180deg, var(--card-2), var(--card));
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
   border: 2px solid var(--line);
-  box-shadow: var(--shadow);
-  transition: transform .08s ease, border-color .15s ease;
+  box-shadow: var(--bevel), var(--drop);
+  transition: transform .08s ease;
 }
-.who:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(0, 0, 0, .35); }
-.who[data-slug="salda"]  { border-color: #3f6dff; }
-.who[data-slug="andres"] { border-color: var(--red); }
+.who:active { transform: translateY(3px); box-shadow: var(--bevel); }
+.who[data-slug="salda"]  { border-color: var(--accent); }
+.who[data-slug="andres"] { border-color: var(--accent); }
 
-.pin-form {
-  margin-top: 22px;
-  display: grid;
-  gap: 10px;
-  text-align: left;
-}
+.pin-form { margin-top: 22px; display: grid; gap: 10px; text-align: left; }
 .pin-form label { font-size: 13px; color: var(--muted); }
 .pin-form label b { color: var(--text); }
 
-input[type="password"],
-input[type="text"] {
+input[type="password"], input[type="text"] {
   width: 100%;
   padding: 14px;
-  font-size: 16px; /* evita el zoom de iOS */
+  font-size: 16px;
   font-family: inherit;
   color: var(--text);
-  background: #0d1330;
+  background: var(--inset);
   border: 2px solid var(--line);
   border-radius: 10px;
+  box-shadow: var(--bevel);
 }
-input:focus { outline: none; border-color: var(--red); }
+input:focus { outline: none; border-color: var(--accent); }
 
 .pin-actions { display: flex; gap: 10px; }
 .pin-actions button { flex: 1; }
 
-.primary, .ghost {
-  padding: 13px;
-  border-radius: 10px;
-  font-weight: 700;
-  font-size: 15px;
-}
+.primary, .ghost { padding: 13px; border-radius: 10px; font-weight: 700; font-size: 15px; }
 .primary {
-  background: var(--red);
-  color: #fff;
-  box-shadow: 0 4px 0 var(--red-dark);
+  background: var(--accent);
+  color: #1c0f04;
+  box-shadow: 0 4px 0 var(--accent-dark), inset 0 2px 0 rgba(255, 255, 255, .25);
 }
-.primary:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--red-dark); }
+.primary:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--accent-dark); }
 .primary:disabled { opacity: .5; }
-.ghost {
-  background: transparent;
-  border: 2px solid var(--line);
-  color: var(--muted);
-}
+.ghost { background: var(--panel); border: 2px solid var(--line); color: var(--muted); box-shadow: var(--bevel); }
 
-.pin-error { color: #ff7a7a; font-size: 13px; min-height: 18px; margin: 0; }
+.pin-error { color: #ff8a8a; font-size: 13px; min-height: 18px; margin: 0; }
 
-.link {
-  margin-top: 20px;
-  color: var(--muted);
-  text-decoration: underline;
-  font-size: 13px;
-}
+.link { margin-top: 20px; color: var(--muted); text-decoration: underline; font-size: 13px; }
 
 /* -------------------------------------------------------------- estructura */
 
-.app {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 14px 12px 40px;
-}
+.app { max-width: 720px; margin: 0 auto; padding: 14px 12px 40px; }
 
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 14px;
-}
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
 .topbar .logo-text { font-size: 10px; }
 
 .whoami {
@@ -200,8 +158,9 @@ input:focus { outline: none; border-color: var(--red); }
   padding: 8px 12px;
   border-radius: 999px;
   border: 2px solid var(--line);
-  background: var(--card);
+  background: var(--panel);
   color: var(--muted);
+  box-shadow: var(--bevel);
 }
 
 /* ---------------------------------------------------------------- banners */
@@ -215,30 +174,28 @@ input:focus { outline: none; border-color: var(--red); }
   text-align: center;
   border: 2px solid;
   line-height: 1.45;
+  box-shadow: var(--bevel);
 }
-.banner.win    { background: rgba(70, 209, 127, .12); border-color: var(--green); color: #b6f5d1; }
-.banner.fight  { background: rgba(255, 203, 61, .12); border-color: var(--gold);  color: #ffe9a8; }
-.banner.wait   { background: rgba(147, 160, 204, .1); border-color: var(--line);  color: var(--muted); }
+.banner.win   { background: rgba(70, 209, 127, .14); border-color: var(--green); color: #c3f7d9; }
+.banner.fight { background: rgba(255, 107, 16, .16); border-color: var(--accent); color: #ffd9b8; }
+.banner.wait  { background: rgba(157, 176, 193, .1); border-color: var(--line); color: var(--muted); }
 
 /* --------------------------------------------------------------- tarjetas */
 
-.players {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
+.players { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
 .card {
-  background: linear-gradient(180deg, var(--card-2), var(--card));
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
   border: 2px solid var(--line);
   border-radius: var(--radius);
   padding: 12px 10px;
-  box-shadow: var(--shadow);
+  box-shadow: var(--bevel), var(--drop);
   position: relative;
   overflow: hidden;
+  min-width: 0;
 }
-.card.me { border-color: var(--red); }
-.card.dead { opacity: .75; }
+.card.me { border-color: var(--accent); box-shadow: var(--bevel), 0 0 0 1px var(--accent), var(--drop); }
+.card.dead { opacity: .78; }
 .card.dead::after {
   content: 'SIN VIDAS';
   position: absolute;
@@ -257,10 +214,7 @@ input:focus { outline: none; border-color: var(--red); }
   text-align: center;
   letter-spacing: .5px;
 }
-.card.me h2::after {
-  content: ' ★';
-  color: var(--gold);
-}
+.card.me h2::after { content: ' ★'; color: var(--accent); }
 
 .section-label {
   font-size: 10px;
@@ -280,34 +234,32 @@ input:focus { outline: none; border-color: var(--red); }
 }
 
 /* ------------------------------------------------------------------ vidas */
+/* minmax(0,1fr): sin esto el grid deja crecer las imagenes a su tamano real
+   y se salen de la tarjeta. Clave para que vidas y medallas encajen. */
 
 .lives {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 3px;
 }
-
 .ball {
+  position: relative;   /* la imagen va absoluta para no estirar la celda */
+  min-width: 0;
   aspect-ratio: 1;
-  padding: 0;
-  display: grid;
-  place-items: center;
   border-radius: 50%;
   transition: transform .1s ease;
 }
 .ball img {
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  object-fit: contain;
   image-rendering: pixelated;
   display: block;
 }
-.ball.spent img {
-  filter: grayscale(1) brightness(.55);
-  opacity: .35;
-}
+.ball.spent img { filter: grayscale(1) brightness(.55); opacity: .32; }
 .ball[disabled] { cursor: default; }
 .ball:not([disabled]):active { transform: scale(.82); }
-
 .ball.just-lost img { animation: shake .4s ease; }
 @keyframes shake {
   0%, 100% { transform: translateX(0) rotate(0); }
@@ -320,47 +272,41 @@ input:focus { outline: none; border-color: var(--red); }
 
 .badges {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 4px;
 }
-
 .badge {
+  position: relative;   /* imagen absoluta: la celda manda, no la imagen */
+  min-width: 0;
   aspect-ratio: 1;
-  display: grid;
-  place-items: center;
-  padding: 2px;
   border-radius: 8px;
-  background: rgba(0, 0, 0, .22);
+  background: var(--inset);
+  box-shadow: inset 0 1px 0 var(--edge-dark);
   transition: transform .1s ease;
 }
 .badge img {
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: 3px;
+  width: calc(100% - 6px);
+  height: calc(100% - 6px);
   object-fit: contain;
+  display: block;
 }
-.badge.locked img {
-  filter: grayscale(1) brightness(.35);
-  opacity: .45;
-}
-.badge.next {
-  background: rgba(255, 203, 61, .14);
-  box-shadow: inset 0 0 0 2px var(--gold);
-}
-.badge.blocked {
-  background: rgba(238, 21, 21, .14);
-  box-shadow: inset 0 0 0 2px var(--red);
-}
+.badge.locked img { filter: grayscale(1) brightness(.35); opacity: .42; }
+.badge.next { background: rgba(255, 107, 16, .16); box-shadow: inset 0 0 0 2px var(--accent); }
+.badge.blocked { background: rgba(238, 21, 21, .16); box-shadow: inset 0 0 0 2px var(--red); }
 .badge:not([disabled]):active { transform: scale(.88); }
 
 .battle-points {
   margin-top: 12px;
   text-align: center;
   font-family: 'Press Start 2P', monospace;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--gold);
-  background: rgba(0, 0, 0, .25);
+  background: var(--inset);
   border-radius: 8px;
   padding: 9px 4px;
+  box-shadow: inset 0 1px 0 var(--edge-dark);
 }
 .battle-points small {
   display: block;
@@ -375,8 +321,9 @@ input:focus { outline: none; border-color: var(--red); }
   margin-top: 8px;
   font-size: 11px;
   line-height: 1.4;
-  color: #ffb4b4;
-  background: rgba(238, 21, 21, .12);
+  color: #ffc9a0;
+  background: rgba(255, 107, 16, .12);
+  border: 1px solid rgba(255, 107, 16, .4);
   border-radius: 8px;
   padding: 7px 8px;
 }
@@ -385,10 +332,11 @@ input:focus { outline: none; border-color: var(--red); }
 
 .checkpoint-box {
   margin-top: 14px;
-  background: var(--card);
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
   border: 2px solid var(--line);
   border-radius: var(--radius);
   padding: 12px;
+  box-shadow: var(--bevel), var(--drop);
 }
 .checkpoint-box h2 {
   font-family: 'Press Start 2P', monospace;
@@ -397,36 +345,32 @@ input:focus { outline: none; border-color: var(--red); }
   color: var(--muted);
 }
 
-.cp-grid {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 6px;
-}
+.cp-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
 .cp {
+  min-width: 0;
   text-align: center;
   padding: 8px 2px;
   border-radius: 8px;
   font-size: 10px;
   font-weight: 700;
   border: 2px solid var(--line);
-  background: rgba(0, 0, 0, .2);
+  background: var(--inset);
   color: var(--muted);
   line-height: 1.3;
+  box-shadow: inset 0 1px 0 var(--edge-dark);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.cp b { display: block; font-size: 13px; }
-.cp.done  { border-color: var(--green); color: #b6f5d1; background: rgba(70, 209, 127, .12); }
-.cp.ready { border-color: var(--gold); color: #ffe9a8; background: rgba(255, 203, 61, .14); animation: pulse 1.6s ease-in-out infinite; }
+.cp b { display: block; font-size: 13px; color: var(--text); }
+.cp.done  { border-color: var(--green); color: #c3f7d9; background: rgba(70, 209, 127, .14); }
+.cp.ready { border-color: var(--accent); color: #ffd9b8; background: rgba(255, 107, 16, .18); animation: pulse 1.6s ease-in-out infinite; }
 .cp.waiting { border-color: var(--red); color: #ffb4b4; }
-
 @keyframes pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 203, 61, .4); }
-  50%      { box-shadow: 0 0 0 6px rgba(255, 203, 61, 0); }
+  0%, 100% { box-shadow: inset 0 1px 0 var(--edge-dark), 0 0 0 0 rgba(255, 107, 16, .45); }
+  50%      { box-shadow: inset 0 1px 0 var(--edge-dark), 0 0 0 6px rgba(255, 107, 16, 0); }
 }
 
-.cp-action {
-  margin-top: 12px;
-  width: 100%;
-}
+.cp-action { margin-top: 12px; width: 100%; }
 
 /* ---------------------------------------------------------------- historia */
 
@@ -444,64 +388,40 @@ input:focus { outline: none; border-color: var(--red); }
   align-items: baseline;
   font-size: 13px;
   padding: 9px 10px;
-  background: var(--card);
+  background: var(--panel);
   border-left: 3px solid var(--line);
   border-radius: 0 8px 8px 0;
   line-height: 1.4;
+  box-shadow: inset 0 1px 0 var(--edge-light);
 }
-.history li .when {
-  margin-left: auto;
-  flex-shrink: 0;
-  font-size: 11px;
-  color: var(--muted);
-}
-.history li .note {
-  display: block;
-  color: var(--muted);
-  font-size: 12px;
-  font-style: italic;
-}
-/* ojo: prefijo ev- para no chocar con .badge / .ball de las tarjetas */
-.history li.ev-life_lost      { border-left-color: var(--red); }
-.history li.ev-life_restored  { border-left-color: #6ea8ff; }
-.history li.ev-badge          { border-left-color: var(--gold); }
-.history li.ev-battle_won     { border-left-color: var(--green); }
+.history li .when { margin-left: auto; flex-shrink: 0; font-size: 11px; color: var(--muted); }
+.history li .note { display: block; color: var(--muted); font-size: 12px; font-style: italic; }
+/* prefijo ev- para no chocar con .badge / .ball de las tarjetas */
+.history li.ev-life_lost     { border-left-color: var(--red); }
+.history li.ev-life_restored { border-left-color: #6ea8ff; }
+.history li.ev-badge         { border-left-color: var(--gold); }
+.history li.ev-battle_won    { border-left-color: var(--green); }
 
-.foot {
-  margin-top: 22px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 11px;
-  color: var(--muted);
-}
+.foot { margin-top: 22px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--muted); }
 .foot .link { margin: 0; }
 
 /* ------------------------------------------------------------------ modal */
 
 .modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(4, 6, 16, .82);
-  display: grid;
-  place-items: center;
-  padding: 20px;
-  z-index: 50;
+  position: fixed; inset: 0;
+  background: rgba(4, 6, 10, .82);
+  display: grid; place-items: center;
+  padding: 20px; z-index: 50;
 }
 .modal-box {
-  width: 100%;
-  max-width: 380px;
-  background: var(--bg-2);
+  width: 100%; max-width: 380px;
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
   border: 2px solid var(--line);
   border-radius: var(--radius);
   padding: 20px;
+  box-shadow: var(--bevel), 0 12px 40px rgba(0, 0, 0, .6);
 }
-.modal-box h3 {
-  font-family: 'Press Start 2P', monospace;
-  font-size: 12px;
-  margin: 0 0 12px;
-  line-height: 1.6;
-}
+.modal-box h3 { font-family: 'Press Start 2P', monospace; font-size: 12px; margin: 0 0 12px; line-height: 1.6; }
 .modal-box p { margin: 0 0 14px; font-size: 14px; line-height: 1.5; color: var(--muted); }
 .modal-actions { display: flex; gap: 10px; margin-top: 16px; }
 .modal-actions button { flex: 1; }
@@ -512,18 +432,18 @@ input:focus { outline: none; border-color: var(--red); }
   border-radius: 10px;
   border: 2px solid var(--line);
   font-weight: 700;
-  background: var(--card);
+  background: var(--panel);
+  box-shadow: var(--bevel);
 }
-.winner-choice button.sel { border-color: var(--gold); background: rgba(255, 203, 61, .16); color: #ffe9a8; }
+.winner-choice button.sel { border-color: var(--accent); background: rgba(255, 107, 16, .2); color: #ffd9b8; }
 
 /* ------------------------------------------------------------------ toast */
 
 .toast {
   position: fixed;
-  left: 50%;
-  bottom: 24px;
+  left: 50%; bottom: 24px;
   transform: translateX(-50%);
-  background: #23305e;
+  background: var(--panel-2);
   border: 2px solid var(--line);
   border-radius: 10px;
   padding: 12px 16px;
@@ -532,7 +452,7 @@ input:focus { outline: none; border-color: var(--red); }
   max-width: 92vw;
   text-align: center;
   z-index: 60;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, .5);
+  box-shadow: var(--bevel), 0 8px 24px rgba(0, 0, 0, .5);
 }
 .toast.err { border-color: var(--red); background: #3a1420; }
 
@@ -541,6 +461,6 @@ input:focus { outline: none; border-color: var(--red); }
 @media (min-width: 560px) {
   .topbar .logo-text { font-size: 13px; }
   .card h2 { font-size: 13px; }
-  .lives { grid-template-columns: repeat(10, 1fr); }
-  .badges { grid-template-columns: repeat(6, 1fr); }
+  .lives { grid-template-columns: repeat(10, minmax(0, 1fr)); }
+  .badges { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 }

@@ -396,7 +396,7 @@ function renderBanner() {
 
 function renderCheckpoints() {
   const box = $('#checkpoint-box');
-  const labels = { done: 'jugado', ready: '¡listo!', waiting: 'esperando', locked: '—' };
+  const labels = { done: 'jugado', ready: '¡listo!', waiting: 'espera', locked: '—' };
 
   const grid = state.checkpoints.map((c) => `
     <div class="cp ${c.status}" title="Al llegar a ${c.requiredBadges} medallas">

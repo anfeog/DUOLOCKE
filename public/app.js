@@ -12,6 +12,35 @@ let pin = null;
 let pollTimer = null;
 let busy = false;
 
+const AVATARS = ['avatar1', 'avatar2', 'avatar3', 'avatar4', 'avatar5', 'avatar6'];
+const myPlayer = () => (state ? state.players.find((p) => p.slug === me) : null);
+
+/* --------------------------------------------------------------- sonidos */
+/* Efectos sacados del juego: faint (perder vida) y Medalla (gimnasio). */
+
+const SND = {
+  life: new Audio('assets/audio/life-lost.mp3'),
+  badge: new Audio('assets/audio/badge.ogg'),
+};
+for (const a of Object.values(SND)) a.preload = 'auto';
+
+let audioUnlocked = false;
+function unlockAudio() {
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+  // Los navegadores solo dejan sonar tras un gesto del usuario.
+  for (const a of Object.values(SND)) {
+    a.play().then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
+  }
+}
+document.addEventListener('pointerdown', unlockAudio, { once: true });
+
+function playSound(key) {
+  const a = SND[key];
+  if (!a) return;
+  try { a.currentTime = 0; a.play().catch(() => {}); } catch { /* ignore */ }
+}
+
 /* ---------------------------------------------------------------- API */
 
 async function api(path, { method = 'GET', body } = {}) {
@@ -34,6 +63,7 @@ async function refresh() {
   try {
     state = await api('/api/state');
     render();
+    maybeAskAvatar();
     $('#sync').textContent = 'Actualizado ' + new Date().toLocaleTimeString('es-ES', {
       hour: '2-digit', minute: '2-digit',
     });
@@ -60,12 +90,65 @@ function showIdentity() {
 
 function enterApp() {
   $('#identity').classList.add('hidden');
+  $('#avatar-picker').classList.add('hidden');
   $('#app').classList.remove('hidden');
   $('#whoami').textContent = me
     ? `Eres ${me === 'salda' ? 'Salda' : 'Andres'} · cambiar`
     : 'Solo mirando · entrar';
   refresh();
   startPolling();
+}
+
+/* ------------------------------------------------------- selector avatar */
+
+let avatarPickerOpen = false;
+let selectedAvatar = null;
+
+function openAvatarPicker() {
+  avatarPickerOpen = true;
+  selectedAvatar = myPlayer()?.avatar || null;
+  const grid = $('#avatar-grid');
+  grid.innerHTML = AVATARS.map((a) => `
+    <button class="avatar-opt${a === selectedAvatar ? ' sel' : ''}" data-avatar="${a}">
+      <img src="assets/sprites/avatars/${a}.png" alt="Personaje">
+    </button>`).join('');
+  grid.querySelectorAll('.avatar-opt').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      selectedAvatar = btn.dataset.avatar;
+      grid.querySelectorAll('.avatar-opt').forEach((b) => b.classList.remove('sel'));
+      btn.classList.add('sel');
+      $('#avatar-confirm').disabled = false;
+    });
+  });
+  $('#avatar-q').textContent = `${me === 'salda' ? 'Salda' : 'Andres'}, elige tu personaje`;
+  $('#avatar-confirm').disabled = !selectedAvatar;
+  $('#avatar-error').textContent = '';
+  $('#avatar-picker').classList.remove('hidden');
+  $('#app').classList.add('hidden');
+}
+
+async function confirmAvatar() {
+  if (!selectedAvatar) return;
+  const btn = $('#avatar-confirm');
+  btn.disabled = true;
+  try {
+    state = await api('/api/avatar', { method: 'POST', body: { avatar: selectedAvatar } });
+    avatarPickerOpen = false;
+    $('#avatar-picker').classList.add('hidden');
+    $('#app').classList.remove('hidden');
+    render();
+  } catch (err) {
+    $('#avatar-error').textContent = err.message;
+    btn.disabled = false;
+  }
+}
+$('#avatar-confirm').addEventListener('click', confirmAvatar);
+
+// Primera vez que entra un jugador sin avatar -> le obliga a elegir.
+function maybeAskAvatar() {
+  if (!me || avatarPickerOpen) return;
+  const mp = myPlayer();
+  if (mp && !mp.avatar) openAvatarPicker();
 }
 
 let pendingSlug = null;
@@ -165,14 +248,16 @@ function toast(msg, isError = false) {
 /* -------------------------------------------------------------- acciones */
 
 async function send(path, body, method = 'POST') {
-  if (busy) return;
+  if (busy) return false;
   busy = true;
   try {
     state = await api(path, { method, body });
     render();
+    return true;
   } catch (err) {
     toast(err.message, true);
     if (/PIN|Identidad/i.test(err.message)) showIdentity();
+    return false;
   } finally {
     busy = false;
   }
@@ -196,9 +281,11 @@ async function onBallTap(index, player) {
         }
   );
   if (!r.confirmed) return;
-  await send('/api/lives', { delta: filled ? -1 : 1, note: r.note });
-  if (filled) {
-    const ball = document.querySelector(`.card.me .ball[data-index="${player.lives - 1}"]`);
+  const livesBefore = player.lives;
+  const ok = await send('/api/lives', { delta: filled ? -1 : 1, note: r.note });
+  if (ok && filled) {
+    playSound('life');
+    const ball = document.querySelector(`.card.me .ball[data-index="${livesBefore - 1}"]`);
     if (ball) {
       ball.classList.add('just-lost');
       setTimeout(() => ball.classList.remove('just-lost'), 400);
@@ -239,7 +326,8 @@ async function onBadgeTap(index, player) {
         }
   );
   if (!r.confirmed) return;
-  await send('/api/badges', { delta: isNext ? 1 : -1 });
+  const ok = await send('/api/badges', { delta: isNext ? 1 : -1 });
+  if (ok && isNext) playSound('badge');
 
   const fresh = state.players.find((p) => p.slug === me);
   if (isNext && fresh && !fresh.canGainBadge && fresh.blockedByCheckpoint) {
@@ -338,8 +426,13 @@ function renderCard(el, player) {
     </button>`;
   }).join('');
 
+  const avatarImg = player.avatar
+    ? `<img src="assets/sprites/avatars/${player.avatar}.png" alt="Personaje de ${player.name}">`
+    : '';
+
   el.innerHTML = `
     <h2>${player.name}</h2>
+    <div class="card-avatar${isMe ? ' editable' : ''}" title="${isMe ? 'Cambiar personaje' : ''}">${avatarImg}</div>
 
     <div class="section-label">VIDAS <span class="count">${player.lives}/${total}</span></div>
     <div class="lives">${balls}</div>
@@ -360,6 +453,8 @@ function renderCard(el, player) {
   el.querySelectorAll('.badge').forEach((b) => {
     b.addEventListener('click', () => onBadgeTap(Number(b.dataset.index), player));
   });
+  const av = el.querySelector('.card-avatar.editable');
+  if (av) av.addEventListener('click', () => openAvatarPicker());
 }
 
 function renderBanner() {

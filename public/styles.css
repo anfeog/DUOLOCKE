@@ -144,6 +144,41 @@ input:focus { outline: none; border-color: var(--accent); }
 
 .link { margin-top: 20px; color: var(--muted); text-decoration: underline; font-size: 13px; }
 
+/* --------------------------------------------------------- selector avatar */
+
+.avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 8px 0 20px;
+}
+.avatar-opt {
+  position: relative;   /* imagen absoluta: no debe estirar la celda */
+  min-width: 0;
+  aspect-ratio: 3 / 4;
+  border-radius: 10px;
+  border: 2px solid var(--line);
+  background: linear-gradient(180deg, var(--panel-2), var(--inset));
+  box-shadow: var(--bevel);
+  overflow: hidden;
+  transition: transform .08s ease;
+}
+.avatar-opt img {
+  position: absolute;
+  inset: 6px;
+  width: calc(100% - 12px);
+  height: calc(100% - 12px);
+  image-rendering: pixelated;
+  object-fit: contain;
+}
+.avatar-opt:active { transform: scale(.94); }
+.avatar-opt.sel {
+  border-color: var(--accent);
+  box-shadow: var(--bevel), 0 0 0 2px var(--accent);
+  background: linear-gradient(180deg, rgba(255, 107, 16, .22), var(--inset));
+}
+#avatar-confirm { width: 100%; }
+
 /* -------------------------------------------------------------- estructura */
 
 .app { max-width: 720px; margin: 0 auto; padding: 14px 12px 40px; }
@@ -210,11 +245,33 @@ input:focus { outline: none; border-color: var(--accent); }
 .card h2 {
   font-family: 'Press Start 2P', monospace;
   font-size: 11px;
-  margin: 0 0 12px;
+  margin: 0 0 8px;
   text-align: center;
   letter-spacing: .5px;
 }
 .card.me h2::after { content: ' ★'; color: var(--accent); }
+
+/* avatar del personaje en la tarjeta */
+.card-avatar {
+  height: 76px;
+  margin: 0 auto 8px;
+  display: grid;
+  place-items: end center;
+}
+.card-avatar img {
+  max-height: 76px;
+  max-width: 100%;
+  image-rendering: pixelated;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 2px rgba(0, 0, 0, .5));
+}
+.card-avatar.editable { cursor: pointer; }
+.card-avatar.editable::after {
+  content: '✎';
+  font-size: 11px;
+  color: var(--muted);
+}
+.card.dead .card-avatar img { filter: grayscale(1) drop-shadow(0 3px 2px rgba(0, 0, 0, .5)); }
 
 .section-label {
   font-size: 10px;

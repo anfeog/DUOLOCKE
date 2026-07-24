@@ -12,6 +12,9 @@ Se abre desde el móvil, cada uno actualiza su estado y el otro lo ve al refresc
 
 1. Abres el link → **¿Quién eres?** → botón `SALDA` o `ANDRES` → PIN.
    El PIN se guarda en el móvil, solo se pide una vez. También hay **Solo mirar** (sin PIN, sin poder tocar nada).
+   La **primera vez** que entra cada uno elige su **personaje** entre los 6 protagonistas
+   seleccionables de Pokémon Z (chico/chica en 3 tonos). El avatar aparece en su tarjeta y lo
+   puede cambiar tocando su propio personaje (✎).
 2. **Vidas:** tocas una Poké Ball. Si está llena te pregunta *"vas a quitar una vida"* y puedes dejar una nota
    ("murió Fletchling vs rival ruta 4"). Si tocas una gris te pregunta *"vas a poner una vida"* (para corregir errores).
 3. **Medallas:** tocas la siguiente medalla → *"¿Ganaste el Gimnasio N?"*. Tocando la última conseguida la quitas.
@@ -22,6 +25,9 @@ Se abre desde el móvil, cada uno actualiza su estado y el otro lo ve al refresc
    combate; si hay empate, la app avisa de que toca Bo3 de desempate.
 
 Cada uno solo puede tocar su propia tarjeta. La página se refresca sola cada 20 s (y al volver a ella).
+
+**Sonidos** (del propio juego): al perder una vida suena el *faint*, y al conseguir un gimnasio suena
+el jingle de medalla. Los navegadores solo dejan sonar tras el primer toque en la página.
 
 ## Estructura
 
@@ -42,6 +48,12 @@ Extraídos de `Pokemon Z V2.18/Graphics/` (esa carpeta **no** se sube al repo, e
 |---|---|
 | `ball.png` | `Graphics/Icons/item267.png` (icono de Poké Ball) |
 | `badges/badge01..12.png` | `Graphics/Transitions/getBadge0..11.png` (las 12 medallas reales del juego) |
+| `avatars/avatar1..6.png` | `Graphics/Characters/trainer000..005.png` (los 6 protagonistas seleccionables) |
+| `audio/life-lost.mp3` | `Audio/SE/faint.mp3` (sonido de debilitar) |
+| `audio/badge.ogg` | `Audio/ME/Medalla.ogg` (jingle de medalla) |
+
+La paleta de colores también sale del juego: los paneles azul pizarra `#313B47` y el acento naranja
+`#FF6B10` son los del menú de pausa (DP Pause Menu) y sus windowskins.
 
 Las medallas apagadas y las vidas gastadas son la misma imagen con `filter: grayscale(1)`.
 
@@ -78,6 +90,7 @@ npm run init-db -- --reset
 | GET | `/health` | 200 `ok` (para UptimeRobot) |
 | GET | `/api/state` | estado completo: jugadores, combates, historial |
 | POST | `/api/auth` | comprueba identidad + PIN |
+| POST | `/api/avatar` | `{ avatar: "avatar1".."avatar6" }` |
 | POST | `/api/lives` | `{ delta: -1 \| 1, note? }` |
 | POST | `/api/badges` | `{ delta: -1 \| 1 }` |
 | POST | `/api/checkpoint` | `{ number, winner, score? }` |

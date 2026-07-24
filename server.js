@@ -2,7 +2,7 @@ import 'dotenv/config';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
-import { db } from './src/db.js';
+import { db, runMigrations } from './src/db.js';
 import {
   TOTAL_BADGES,
   BADGES_PER_CHECKPOINT,
@@ -81,7 +81,7 @@ function requireAuth(req, res, next) {
 
 async function loadPlayers() {
   const res = await db.execute(
-    'SELECT id, slug, name, lives, badges, battle_points FROM players ORDER BY id'
+    'SELECT id, slug, name, lives, badges, battle_points, avatar FROM players ORDER BY id'
   );
   return res.rows.map((r) => ({
     id: Number(r.id),
@@ -90,8 +90,11 @@ async function loadPlayers() {
     lives: Number(r.lives),
     badges: Number(r.badges),
     battle_points: Number(r.battle_points),
+    avatar: r.avatar ? String(r.avatar) : null,
   }));
 }
+
+const VALID_AVATARS = new Set(['avatar1', 'avatar2', 'avatar3', 'avatar4', 'avatar5', 'avatar6']);
 
 async function loadCheckpoints() {
   const res = await db.execute('SELECT number, winner_id, score, resolved_at FROM checkpoints');
@@ -160,6 +163,7 @@ async function buildState() {
         lives: p.lives,
         badges: p.badges,
         battlePoints: p.battle_points,
+        avatar: p.avatar,
         canGainBadge: gate.allowed,
         blockReason: gate.allowed ? null : gate.reason,
         blockedByCheckpoint: gate.blockedByCheckpoint ?? null,
@@ -201,7 +205,19 @@ app.get('/api/state', wrap(async (_req, res) => {
 app.post('/api/auth', requireAuth, wrap(async (req, res) => {
   const players = await loadPlayers();
   const me = players.find((p) => p.slug === req.auth.slug);
-  res.json({ ok: true, player: { slug: me.slug, name: me.name } });
+  res.json({ ok: true, player: { slug: me.slug, name: me.name, avatar: me.avatar } });
+}));
+
+// Elegir/cambiar avatar (uno de los 6 protagonistas del juego).
+app.post('/api/avatar', requireAuth, wrap(async (req, res) => {
+  const avatar = String(req.body?.avatar || '');
+  if (!VALID_AVATARS.has(avatar)) {
+    return res.status(400).json({ error: 'Avatar invalido.' });
+  }
+  const players = await loadPlayers();
+  const me = players.find((p) => p.slug === req.auth.slug);
+  await db.execute({ sql: 'UPDATE players SET avatar = ? WHERE id = ?', args: [avatar, me.id] });
+  res.json(await buildState());
 }));
 
 // Vidas: delta -1 (perder) o +1 (devolver, por si te equivocaste).
@@ -341,6 +357,11 @@ app.delete('/api/checkpoint/:number', requireAuth, wrap(async (req, res) => {
   res.json(await buildState());
 }));
 
-app.listen(PORT, () => {
-  console.log(`Duolocke Z Jalmeida escuchando en http://localhost:${PORT}`);
-});
+// Aplica migraciones pendientes antes de aceptar trafico.
+runMigrations()
+  .catch((err) => console.error('Fallo en migraciones:', err))
+  .finally(() => {
+    app.listen(PORT, () => {
+      console.log(`Duolocke Z Jalmeida escuchando en http://localhost:${PORT}`);
+    });
+  });

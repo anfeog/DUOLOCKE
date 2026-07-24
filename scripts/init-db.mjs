@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { db, SCHEMA } from '../src/db.js';
+import { db, SCHEMA, runMigrations } from '../src/db.js';
 
 const STARTING_LIVES = Number(process.env.STARTING_LIVES ?? 30);
 const CHALLENGE_NAME = 'Duolocke Z Jalmeida';
@@ -13,6 +13,7 @@ const reset = process.argv.includes('--reset');
 for (const stmt of SCHEMA) {
   await db.execute(stmt);
 }
+await runMigrations();
 console.log('Tablas creadas/verificadas.');
 
 if (reset) {

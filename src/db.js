@@ -24,7 +24,8 @@ export const SCHEMA = [
      name TEXT NOT NULL,
      lives INTEGER NOT NULL,
      badges INTEGER NOT NULL DEFAULT 0,
-     battle_points INTEGER NOT NULL DEFAULT 0
+     battle_points INTEGER NOT NULL DEFAULT 0,
+     avatar TEXT
    )`,
   // Un checkpoint por cada 2 gimnasios (6 en total). Sin fila = todavia no jugado.
   `CREATE TABLE IF NOT EXISTS checkpoints (
@@ -42,3 +43,19 @@ export const SCHEMA = [
    )`,
   `CREATE INDEX IF NOT EXISTS idx_events_created ON events(created_at DESC)`,
 ];
+
+// Migraciones para DBs que ya existian antes de anadir columnas nuevas.
+// Se ejecutan ignorando el error "duplicate column" si ya estan aplicadas.
+const MIGRATIONS = [
+  `ALTER TABLE players ADD COLUMN avatar TEXT`,
+];
+
+export async function runMigrations() {
+  for (const sql of MIGRATIONS) {
+    try {
+      await db.execute(sql);
+    } catch (err) {
+      if (!/duplicate column|already exists/i.test(String(err?.message))) throw err;
+    }
+  }
+}

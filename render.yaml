@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: duolocke-z-jalmeida
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: STARTING_LIVES
+        value: "30"
+      # Estas cuatro se rellenan a mano en el panel de Render (sync: false = no se suben al repo)
+      - key: TURSO_DATABASE_URL
+        sync: false
+      - key: TURSO_AUTH_TOKEN
+        sync: false
+      - key: PIN_SALDA
+        sync: false
+      - key: PIN_ANDRES
+        sync: false

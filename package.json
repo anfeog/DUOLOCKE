@@ -1,0 +1,20 @@
+{
+  "name": "duolocke-z-jalmeida",
+  "version": "1.0.0",
+  "description": "Tracker compartido del Duolocke Z Jalmeida (Salda vs Andres)",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "init-db": "node scripts/init-db.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.15.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  }
+}

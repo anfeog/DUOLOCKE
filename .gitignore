@@ -1,0 +1,7 @@
+node_modules/
+.env
+.env.local
+*.log
+
+# La carpeta del juego NO se sube al repo (solo se usa para extraer sprites)
+Pokemon Z V2.18/

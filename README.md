@@ -29,6 +29,16 @@ Cada uno solo puede tocar su propia tarjeta. La página se refresca sola cada 20
 **Sonidos** (del propio juego): al perder una vida suena el *faint*, y al conseguir un gimnasio suena
 el jingle de medalla. Los navegadores solo dejan sonar tras el primer toque en la página.
 
+**Cementerio**: al quitar una vida puedes buscar el Pokémon que cayó (buscador con los 1018 sprites
+del juego) y ponerle su mote. Aparece en la sección ☠ Cementerio, una columna por jugador. Si devuelves
+una vida por error, se borra la última muerte de ese jugador.
+
+**Avisos del rival**: cuando abres o refrescas, si el otro jugador cambió algo desde tu última visita
+(perdió vidas, ganó medallas o combates), sale un aviso azul arriba (se cierra al tocarlo).
+
+**Instalable (PWA)**: desde Chrome (menú → *Instalar app* / *Añadir a pantalla de inicio*) se añade como
+app con icono de Poké Ball y se abre a pantalla completa. Funciona con service worker (`sw.js` + `manifest.json`).
+
 ## Estructura
 
 ```
@@ -49,6 +59,8 @@ Extraídos de `Pokemon Z V2.18/Graphics/` (esa carpeta **no** se sube al repo, e
 | `ball.png` | `Graphics/Icons/item267.png` (icono de Poké Ball) |
 | `badges/badge01..12.png` | `Graphics/Transitions/getBadge0..11.png` (las 12 medallas reales del juego) |
 | `avatars/avatar1..6.png` | `Graphics/Characters/trainer000..005.png` (los 6 protagonistas seleccionables) |
+| `pokemon/pkmn{n}.png` | `Graphics/Icons/icon{NNN}.png` recortado al 1er frame (1018 iconos para el cementerio) |
+| `data/pokemon.json` | `PBS/pokemon.txt` (nombres + nº de cada especie para el buscador) |
 | `audio/life-lost.mp3` | `Audio/SE/faint.mp3` (sonido de debilitar) |
 | `audio/badge.ogg` | `Audio/ME/Medalla.ogg` (jingle de medalla) |
 
@@ -91,7 +103,7 @@ npm run init-db -- --reset
 | GET | `/api/state` | estado completo: jugadores, combates, historial |
 | POST | `/api/auth` | comprueba identidad + PIN |
 | POST | `/api/avatar` | `{ avatar: "avatar1".."avatar6" }` |
-| POST | `/api/lives` | `{ delta: -1 \| 1, note? }` |
+| POST | `/api/lives` | `{ delta: -1 \| 1, dex?, species?, nickname?, note? }` (los últimos, para el cementerio) |
 | POST | `/api/badges` | `{ delta: -1 \| 1 }` |
 | POST | `/api/checkpoint` | `{ number, winner, score? }` |
 | DELETE | `/api/checkpoint/:n` | borra el resultado del último combate |

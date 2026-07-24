@@ -41,6 +41,16 @@ export const SCHEMA = [
      note TEXT,
      created_at TEXT DEFAULT (datetime('now'))
    )`,
+  // Cementerio: un Pokemon caido por cada vida perdida (opcional).
+  `CREATE TABLE IF NOT EXISTS deaths (
+     id INTEGER PRIMARY KEY,
+     player_id INTEGER REFERENCES players(id),
+     dex INTEGER,
+     species TEXT,
+     nickname TEXT,
+     note TEXT,
+     created_at TEXT DEFAULT (datetime('now'))
+   )`,
   `CREATE INDEX IF NOT EXISTS idx_events_created ON events(created_at DESC)`,
 ];
 

@@ -15,6 +15,14 @@ let busy = false;
 const AVATARS = ['avatar1', 'avatar2', 'avatar3', 'avatar4', 'avatar5', 'avatar6'];
 const myPlayer = () => (state ? state.players.find((p) => p.slug === me) : null);
 
+// Pokedex para el buscador del cementerio (se carga una vez).
+let POKEDEX = [];
+fetch('assets/data/pokemon.json')
+  .then((r) => r.json())
+  .then((data) => { POKEDEX = data; })
+  .catch(() => {});
+const pkmnIcon = (n) => `assets/sprites/pokemon/pkmn${n}.png`;
+
 /* --------------------------------------------------------------- sonidos */
 /* Efectos sacados del juego: faint (perder vida) y Medalla (gimnasio). */
 
@@ -64,6 +72,7 @@ async function refresh() {
     state = await api('/api/state');
     render();
     maybeAskAvatar();
+    checkRivalNews();
     $('#sync').textContent = 'Actualizado ' + new Date().toLocaleTimeString('es-ES', {
       hour: '2-digit', minute: '2-digit',
     });
@@ -71,6 +80,42 @@ async function refresh() {
     $('#sync').textContent = 'Sin conexión';
   }
 }
+
+/* ------------------------------------------------- avisos del rival */
+// Compara el estado del rival con lo ultimo que vio este jugador y avisa.
+
+function checkRivalNews() {
+  if (!me || !state) return;
+  const rival = state.players.find((p) => p.slug !== me);
+  if (!rival) return;
+
+  const key = `duo.seen.${me}`;
+  const cur = { lives: rival.lives, badges: rival.badges, bp: rival.battlePoints };
+  let prev = null;
+  try { prev = JSON.parse(localStorage.getItem(key) || 'null'); } catch { prev = null; }
+
+  if (prev) {
+    const parts = [];
+    const dl = cur.lives - prev.lives;
+    if (dl < 0) parts.push(`perdió ${-dl} vida${-dl > 1 ? 's' : ''}`);
+    else if (dl > 0) parts.push(`recuperó ${dl} vida${dl > 1 ? 's' : ''}`);
+    const db = cur.badges - prev.badges;
+    if (db > 0) parts.push(`+${db} medalla${db > 1 ? 's' : ''}`);
+    else if (db < 0) parts.push(`−${-db} medalla${-db > 1 ? 's' : ''}`);
+    const dp = cur.bp - prev.bp;
+    if (dp > 0) parts.push(`ganó ${dp} combate${dp > 1 ? 's' : ''}`);
+
+    if (parts.length) {
+      const news = $('#news');
+      news.innerHTML = `🔔 <span class="news-who">${rival.name}</span> ${parts.join(' · ')} <span style="opacity:.75;font-weight:400">desde tu última visita</span>`;
+      news.classList.remove('hidden');
+    }
+  }
+  // Guarda lo visto ahora para no repetir el aviso.
+  localStorage.setItem(key, JSON.stringify(cur));
+}
+
+$('#news').addEventListener('click', () => $('#news').classList.add('hidden'));
 
 function startPolling() {
   clearInterval(pollTimer);
@@ -235,6 +280,86 @@ function confirmModal({ title, text, withNote = false, extraHTML = '', okLabel =
   });
 }
 
+// Modal de perder vida: incluye buscador de Pokemon caido + mote.
+function askLifeLoss(player) {
+  return new Promise((resolve) => {
+    $('#modal-title').textContent = 'Vas a quitar una vida';
+    $('#modal-text').textContent = `Pasarás de ${player.lives} a ${player.lives - 1} vidas.`;
+    $('#modal-ok').textContent = 'Quitar vida';
+    $('#modal-note').classList.add('hidden');
+    $('#modal-extra').innerHTML = `
+      <div class="death-picker">
+        <label>¿Qué Pokémon cayó? (opcional)</label>
+        <div id="dp-selected" class="dp-selected"></div>
+        <input id="dp-search" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Busca: Charmander...">
+        <div id="dp-results" class="dp-results"></div>
+        <input id="dp-nick" type="text" maxlength="40" placeholder="Mote (opcional)">
+      </div>`;
+    $('#modal').classList.remove('hidden');
+
+    const search = $('#dp-search');
+    const results = $('#dp-results');
+    const selBox = $('#dp-selected');
+    let sel = { dex: null, species: null };
+
+    const clearSelection = () => {
+      sel = { dex: null, species: null };
+      selBox.classList.remove('show');
+      selBox.innerHTML = '';
+    };
+
+    const pick = (n, name) => {
+      sel = { dex: n, species: name };
+      selBox.innerHTML = `
+        <img src="${pkmnIcon(n)}" alt="">
+        <span class="sp-name">${name}</span>
+        <button type="button" class="sp-clear" title="Quitar">✕</button>`;
+      selBox.classList.add('show');
+      selBox.querySelector('.sp-clear').addEventListener('click', () => {
+        clearSelection();
+        search.value = '';
+        search.focus();
+      });
+      results.classList.remove('show');
+      results.innerHTML = '';
+      search.value = name;
+    };
+
+    search.addEventListener('input', () => {
+      const q = search.value.trim().toLowerCase();
+      if (q.length < 2) { results.classList.remove('show'); results.innerHTML = ''; return; }
+      const hits = POKEDEX
+        .filter((p) => p.name.toLowerCase().includes(q))
+        .sort((a, b) => (a.name.toLowerCase().startsWith(q) ? 0 : 1) - (b.name.toLowerCase().startsWith(q) ? 0 : 1))
+        .slice(0, 8);
+      results.innerHTML = hits.map((p) => `
+        <button type="button" class="dp-opt" data-n="${p.n}" data-name="${p.name}">
+          <img src="${pkmnIcon(p.n)}" alt=""><span>${p.name}</span>
+        </button>`).join('');
+      results.classList.toggle('show', hits.length > 0);
+      results.querySelectorAll('.dp-opt').forEach((b) => {
+        b.addEventListener('click', () => pick(Number(b.dataset.n), b.dataset.name));
+      });
+    });
+
+    const close = (result) => {
+      $('#modal').classList.add('hidden');
+      $('#modal-ok').removeEventListener('click', ok);
+      $('#modal-cancel').removeEventListener('click', cancel);
+      resolve(result);
+    };
+    const ok = () => close({
+      confirmed: true,
+      dex: sel.dex,
+      species: sel.species,
+      nickname: $('#dp-nick').value.trim(),
+    });
+    const cancel = () => close({ confirmed: false });
+    $('#modal-ok').addEventListener('click', ok);
+    $('#modal-cancel').addEventListener('click', cancel);
+  });
+}
+
 let toastTimer = null;
 function toast(msg, isError = false) {
   const el = $('#toast');
@@ -266,23 +391,19 @@ async function send(path, body, method = 'POST') {
 async function onBallTap(index, player) {
   if (player.slug !== me) return;
   const filled = index < player.lives;
-  const r = await confirmModal(
-    filled
-      ? {
-          title: 'Vas a quitar una vida',
-          text: `Pasarás de ${player.lives} a ${player.lives - 1} vidas.`,
-          withNote: true,
-          okLabel: 'Quitar vida',
-        }
-      : {
-          title: 'Vas a poner una vida',
-          text: `Pasarás de ${player.lives} a ${player.lives + 1} vidas. Úsalo solo si te equivocaste.`,
-          okLabel: 'Poner vida',
-        }
-  );
+  const r = filled
+    ? await askLifeLoss(player)
+    : await confirmModal({
+        title: 'Vas a poner una vida',
+        text: `Pasarás de ${player.lives} a ${player.lives + 1} vidas. Úsalo solo si te equivocaste.`,
+        okLabel: 'Poner vida',
+      });
   if (!r.confirmed) return;
   const livesBefore = player.lives;
-  const ok = await send('/api/lives', { delta: filled ? -1 : 1, note: r.note });
+  const body = filled
+    ? { delta: -1, dex: r.dex, species: r.species, nickname: r.nickname }
+    : { delta: 1 };
+  const ok = await send('/api/lives', body);
   if (ok && filled) {
     playSound('life');
     const ball = document.querySelector(`.card.me .ball[data-index="${livesBefore - 1}"]`);
@@ -548,12 +669,41 @@ function renderHistory() {
     : '<li style="color:var(--muted)">Todavía no ha pasado nada.</li>';
 }
 
+function renderGraveyard() {
+  const deaths = state.deaths || [];
+  const section = $('#graveyard');
+  if (deaths.length === 0) { section.classList.add('hidden'); return; }
+  section.classList.remove('hidden');
+
+  const cols = state.players.map((p) => {
+    const mine = deaths.filter((d) => d.player === p.slug);
+    const items = mine.length
+      ? mine.map((d) => `
+          <div class="grave-item">
+            ${d.dex ? `<img src="${pkmnIcon(d.dex)}" alt="">` : ''}
+            <div class="g-txt">
+              <div class="g-nick">${d.nickname || d.species || '¿?'}</div>
+              ${d.species && d.nickname ? `<div class="g-sp">${d.species}</div>` : ''}
+            </div>
+          </div>`).join('')
+      : '<div class="grave-empty">Sin bajas 🎉</div>';
+    return `
+      <div class="grave-col">
+        <h3>${p.name} <span class="cnt">· ${mine.length}</span></h3>
+        ${items}
+      </div>`;
+  }).join('');
+
+  $('#graveyard-cols').innerHTML = cols;
+}
+
 function render() {
   if (!state) return;
   const cards = document.querySelectorAll('.card');
   state.players.forEach((p, i) => renderCard(cards[i], p));
   renderBanner();
   renderCheckpoints();
+  renderGraveyard();
   renderHistory();
 }
 
@@ -570,3 +720,10 @@ function render() {
     showIdentity();
   }
 })();
+
+// Registrar el service worker (para instalar como app / offline).
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}

@@ -17,6 +17,7 @@ await runMigrations();
 console.log('Tablas creadas/verificadas.');
 
 if (reset) {
+  await db.execute('DELETE FROM deaths');
   await db.execute('DELETE FROM events');
   await db.execute('DELETE FROM checkpoints');
   await db.execute('DELETE FROM players');

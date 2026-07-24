@@ -117,7 +117,7 @@ async function logEvent(playerId, type, note) {
 }
 
 async function buildState() {
-  const [challengeRes, players, checkpoints, eventsRes] = await Promise.all([
+  const [challengeRes, players, checkpoints, eventsRes, deathsRes] = await Promise.all([
     db.execute('SELECT id, name, starting_lives, total_badges FROM challenge LIMIT 1'),
     loadPlayers(),
     loadCheckpoints(),
@@ -125,6 +125,11 @@ async function buildState() {
       `SELECT e.id, e.type, e.note, e.created_at, p.slug, p.name
          FROM events e JOIN players p ON p.id = e.player_id
         ORDER BY e.id DESC LIMIT 25`
+    ),
+    db.execute(
+      `SELECT d.id, d.dex, d.species, d.nickname, d.note, d.created_at, p.slug
+         FROM deaths d JOIN players p ON p.id = d.player_id
+        ORDER BY d.id DESC LIMIT 200`
     ),
   ]);
 
@@ -180,6 +185,15 @@ async function buildState() {
       player: String(r.slug),
       playerName: String(r.name),
     })),
+    deaths: deathsRes.rows.map((r) => ({
+      id: Number(r.id),
+      dex: r.dex != null ? Number(r.dex) : null,
+      species: r.species ? String(r.species) : null,
+      nickname: r.nickname ? String(r.nickname) : null,
+      note: r.note ? String(r.note) : null,
+      at: String(r.created_at),
+      player: String(r.slug),
+    })),
     serverTime: new Date().toISOString(),
   };
 }
@@ -227,6 +241,10 @@ app.post('/api/lives', requireAuth, wrap(async (req, res) => {
     return res.status(400).json({ error: 'delta tiene que ser 1 o -1.' });
   }
   const note = typeof req.body?.note === 'string' ? req.body.note.slice(0, 200).trim() : '';
+  // Datos del Pokemon caido (opcionales, solo al perder vida).
+  const dex = Number.isInteger(Number(req.body?.dex)) ? Number(req.body.dex) : null;
+  const species = typeof req.body?.species === 'string' ? req.body.species.slice(0, 40).trim() : '';
+  const nickname = typeof req.body?.nickname === 'string' ? req.body.nickname.slice(0, 40).trim() : '';
 
   const players = await loadPlayers();
   const me = players.find((p) => p.slug === req.auth.slug);
@@ -242,7 +260,25 @@ app.post('/api/lives', requireAuth, wrap(async (req, res) => {
   }
 
   await db.execute({ sql: 'UPDATE players SET lives = ? WHERE id = ?', args: [next, me.id] });
-  await logEvent(me.id, delta === -1 ? 'life_lost' : 'life_restored', note);
+
+  if (delta === -1) {
+    // Nota del historial: mote + especie si se indicaron.
+    const label = [nickname, species && `(${species})`].filter(Boolean).join(' ');
+    await logEvent(me.id, 'life_lost', label || note);
+    if (species || nickname) {
+      await db.execute({
+        sql: 'INSERT INTO deaths (player_id, dex, species, nickname, note) VALUES (?, ?, ?, ?, ?)',
+        args: [me.id, dex, species || null, nickname || null, note || null],
+      });
+    }
+  } else {
+    // Devolver una vida (correccion): quita la ultima muerte de ese jugador.
+    await logEvent(me.id, 'life_restored', note);
+    await db.execute({
+      sql: 'DELETE FROM deaths WHERE id = (SELECT id FROM deaths WHERE player_id = ? ORDER BY id DESC LIMIT 1)',
+      args: [me.id],
+    });
+  }
   res.json(await buildState());
 }));
 
